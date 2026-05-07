@@ -47,10 +47,7 @@ nosetests.xml
 coverage.xml
 *.cover
 *.py.cover
-<<<<<<< HEAD
-=======
 *.lcov
->>>>>>> 24d336c (Initial scaffold)
 .hypothesis/
 .pytest_cache/
 cover/
@@ -126,22 +123,14 @@ ipython_config.py
 # pixi.lock
 #   Pixi creates a virtual environment in the .pixi directory, just like venv module creates one
 #   in the .venv directory. It is recommended not to include this directory in version control.
-<<<<<<< HEAD
-.pixi
-=======
 .pixi/*
 !.pixi/config.toml
->>>>>>> 24d336c (Initial scaffold)
 
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
 __pypackages__/
 
 # Celery stuff
-<<<<<<< HEAD
-celerybeat-schedule
-=======
 celerybeat-schedule*
->>>>>>> 24d336c (Initial scaffold)
 celerybeat.pid
 
 # Redis
@@ -208,15 +197,9 @@ cython_debug/
 .abstra/
 
 # Visual Studio Code
-<<<<<<< HEAD
-#   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
-#   that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#   and can be added to the global gitignore or merged into this file. However, if you prefer, 
-=======
 #   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore
 #   that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
 #   and can be added to the global gitignore or merged into this file. However, if you prefer,
->>>>>>> 24d336c (Initial scaffold)
 #   you could uncomment the following to ignore the entire vscode folder
 # .vscode/
 # Temporary file for partial code execution
@@ -235,8 +218,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
-<<<<<<< HEAD
-=======
 
 # Project-specific
 .ruff_cache/
@@ -246,4 +227,3 @@ htmlcov/
 .coverage
 .env
 .env.test
->>>>>>> 24d336c (Initial scaffold)

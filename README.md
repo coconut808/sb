@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-# sb
-claude workshop repo
-=======
 # second-brain
 
 ## Installation
@@ -76,4 +72,3 @@ Build static docs:
 ```bash
 uv run mkdocs build
 ```
->>>>>>> 24d336c (Initial scaffold)
