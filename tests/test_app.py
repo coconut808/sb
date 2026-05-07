@@ -34,6 +34,7 @@ def test_bare_invocation_lists_subcommands():
     # but the help should advertise the available subcommands.
     assert "hello" in result.output
     assert "new" in result.output
+    assert "list" in result.output
 
 
 def test_log_format_uses_pipe_separator_and_3letter_level(capfd):
@@ -111,3 +112,68 @@ def test_new_filename_uses_slugified_text(tmp_path, monkeypatch):
         r"^\d{4}-\d{2}-\d{2}-\d{6}-cafe-resume\.md$",
         written[0].name,
     )
+
+
+def test_list_renders_path_header_and_numbered_notes(tmp_path, monkeypatch):
+    monkeypatch.setenv("NOTES_DIR", str(tmp_path))
+    (tmp_path / "2026-05-06-094501-old.md").write_text("# old\n")
+    (tmp_path / "2026-05-07-093045-new.md").write_text("# new\n")
+    result = CliRunner().invoke(cli, ["list"])
+    assert result.exit_code == 0, result.output
+    lines = result.output.splitlines()
+    assert lines[0] == f"Notes in {tmp_path}:"
+    assert lines[1] == ""
+    assert lines[2] == "  1. 2026-05-07-093045-new.md"
+    assert lines[3] == "  2. 2026-05-06-094501-old.md"
+
+
+def test_list_empty_directory_shows_empty_message(tmp_path, monkeypatch):
+    monkeypatch.setenv("NOTES_DIR", str(tmp_path))
+    result = CliRunner().invoke(cli, ["list"])
+    assert result.exit_code == 0, result.output
+    assert f"Notes in {tmp_path}:" in result.output
+    assert "(no notes yet)" in result.output
+
+
+def test_list_missing_directory_is_created_and_empty(tmp_path, monkeypatch):
+    target = tmp_path / "does-not-exist"
+    monkeypatch.setenv("NOTES_DIR", str(target))
+    result = CliRunner().invoke(cli, ["list"])
+    assert result.exit_code == 0, result.output
+    assert target.is_dir()
+    assert "(no notes yet)" in result.output
+
+
+def test_list_ignores_non_markdown_and_subdirs(tmp_path, monkeypatch):
+    monkeypatch.setenv("NOTES_DIR", str(tmp_path))
+    (tmp_path / "2026-05-07-093045-keep.md").write_text("# keep\n")
+    (tmp_path / "skip.txt").write_text("nope")
+    sub = tmp_path / "nested"
+    sub.mkdir()
+    (sub / "deep.md").write_text("# deep\n")
+    result = CliRunner().invoke(cli, ["list"])
+    assert result.exit_code == 0, result.output
+    assert "keep.md" in result.output
+    assert "skip.txt" not in result.output
+    assert "deep.md" not in result.output
+
+
+def test_list_right_aligns_numbers_for_two_digit_counts(tmp_path, monkeypatch):
+    monkeypatch.setenv("NOTES_DIR", str(tmp_path))
+    for i in range(10):
+        (tmp_path / f"2026-05-{i:02d}-093045-note.md").write_text("# n\n")
+    result = CliRunner().invoke(cli, ["list"])
+    assert result.exit_code == 0, result.output
+    assert "   1. " in result.output
+    assert "  10. " in result.output
+
+
+def test_list_uses_notes_dir_option_over_env(tmp_path, monkeypatch):
+    other = tmp_path / "from-option"
+    other.mkdir()
+    (other / "2026-05-07-093045-opt.md").write_text("# opt\n")
+    monkeypatch.setenv("NOTES_DIR", str(tmp_path / "from-env"))
+    result = CliRunner().invoke(cli, ["list", "--notes-dir", str(other)])
+    assert result.exit_code == 0, result.output
+    assert "opt.md" in result.output
+    assert not (tmp_path / "from-env").exists()

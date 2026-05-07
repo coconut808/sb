@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-from second_brain.notes import slugify, write_note
+from second_brain.notes import list_notes, slugify, write_note
 
 
 def test_slugify_basic():
@@ -72,3 +72,51 @@ def test_write_note_expanduser(tmp_path, monkeypatch):
 def test_write_note_default_now(tmp_path):
     path = write_note("hello", str(tmp_path))
     assert re.match(r"^\d{4}-\d{2}-\d{2}-\d{6}-hello\.md$", path.name)
+
+
+def test_list_notes_returns_markdown_newest_first(tmp_path):
+    (tmp_path / "2026-05-06-094501-old.md").write_text("# old\n")
+    (tmp_path / "2026-05-07-093045-new.md").write_text("# new\n")
+    result = list_notes(str(tmp_path))
+    assert [p.name for p in result] == [
+        "2026-05-07-093045-new.md",
+        "2026-05-06-094501-old.md",
+    ]
+
+
+def test_list_notes_filters_non_markdown(tmp_path):
+    (tmp_path / "2026-05-07-093045-keep.md").write_text("# keep\n")
+    (tmp_path / "ignore.txt").write_text("nope")
+    (tmp_path / "ignore.markdown").write_text("nope")
+    (tmp_path / ".hidden").write_text("nope")
+    result = list_notes(str(tmp_path))
+    assert [p.name for p in result] == ["2026-05-07-093045-keep.md"]
+
+
+def test_list_notes_does_not_recurse(tmp_path):
+    (tmp_path / "top.md").write_text("# top\n")
+    sub = tmp_path / "sub"
+    sub.mkdir()
+    (sub / "nested.md").write_text("# nested\n")
+    result = list_notes(str(tmp_path))
+    assert [p.name for p in result] == ["top.md"]
+
+
+def test_list_notes_creates_missing_dir(tmp_path):
+    target = tmp_path / "does-not-exist" / "nested"
+    assert list_notes(str(target)) == []
+    assert target.is_dir()
+
+
+def test_list_notes_empty_dir_returns_empty_list(tmp_path):
+    assert list_notes(str(tmp_path)) == []
+
+
+def test_list_notes_expanduser(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    (tmp_path).mkdir(parents=True, exist_ok=True)
+    notes_root = tmp_path / "sb-list-notes"
+    notes_root.mkdir()
+    (notes_root / "2026-05-07-093045-hi.md").write_text("# hi\n")
+    result = list_notes("~/sb-list-notes")
+    assert [p.name for p in result] == ["2026-05-07-093045-hi.md"]

@@ -1,10 +1,11 @@
 import os
 import sys
+from pathlib import Path
 
 import click
 from loguru import logger
 
-from second_brain.notes import write_note
+from second_brain.notes import list_notes, write_note
 
 
 _LEVEL_ABBR = {
@@ -64,3 +65,25 @@ def new_note(text: str, notes_dir: str):
     """Save TEXT as a quick-thought markdown file."""
     path = write_note(text, notes_dir)
     click.echo(str(path))
+
+
+@cli.command(name="list")
+@click.option(
+    "--notes-dir",
+    envvar="NOTES_DIR",
+    default="~/second_brain",
+    show_default=True,
+    help="Directory where notes are read from. Reads NOTES_DIR if set.",
+)
+def list_notes_cmd(notes_dir: str):
+    """Show saved notes, newest first."""
+    directory = Path(notes_dir).expanduser()
+    notes = list_notes(notes_dir)
+    click.echo(f"Notes in {directory}:")
+    click.echo()
+    if not notes:
+        click.echo("  (no notes yet)")
+        return
+    width = len(str(len(notes)))
+    for i, path in enumerate(notes, start=1):
+        click.echo(f"  {i:>{width}}. {path.name}")

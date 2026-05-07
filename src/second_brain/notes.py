@@ -22,3 +22,10 @@ def write_note(text: str, notes_dir: str, *, now: datetime | None = None) -> Pat
     path = directory / f"{when:%Y-%m-%d-%H%M%S}-{slugify(text)}.md"
     path.write_text(f"# {text}\n")
     return path
+
+
+def list_notes(notes_dir: str) -> list[Path]:
+    """Return *.md files in notes_dir, newest first. Creates the dir if missing."""
+    directory = Path(notes_dir).expanduser()
+    directory.mkdir(parents=True, exist_ok=True)
+    return sorted(directory.glob("*.md"), reverse=True)
