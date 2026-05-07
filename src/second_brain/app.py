@@ -5,7 +5,7 @@ from pathlib import Path
 import click
 from loguru import logger
 
-from second_brain.notes import list_notes, write_note
+from second_brain.notes import list_notes, read_note, write_note
 
 
 _LEVEL_ABBR = {
@@ -87,3 +87,23 @@ def list_notes_cmd(notes_dir: str):
     width = len(str(len(notes)))
     for i, path in enumerate(notes, start=1):
         click.echo(f"  {i:>{width}}. {path.name}")
+
+
+@cli.command(name="show")
+@click.argument("note", type=click.STRING)
+@click.option(
+    "--notes-dir",
+    envvar="NOTES_DIR",
+    default="~/second_brain",
+    show_default=True,
+    help="Directory where notes are read from. Reads NOTES_DIR if set.",
+)
+def show_note(note: str, notes_dir: str):
+    """Print a note's contents. NOTE is a list index or a filename."""
+    try:
+        path, content = read_note(notes_dir, note)
+    except (ValueError, IndexError, FileNotFoundError) as exc:
+        raise click.BadParameter(str(exc), param_hint="NOTE") from exc
+    click.echo(path.name)
+    click.echo()
+    click.echo(content, nl=False)

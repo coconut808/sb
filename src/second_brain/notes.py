@@ -29,3 +29,36 @@ def list_notes(notes_dir: str) -> list[Path]:
     directory = Path(notes_dir).expanduser()
     directory.mkdir(parents=True, exist_ok=True)
     return sorted(directory.glob("*.md"), reverse=True)
+
+
+def read_note(notes_dir: str, note_ref: str) -> tuple[Path, str]:
+    """Resolve note_ref (1-based index or filename) and return (path, content).
+
+    Read-only: never creates notes_dir.
+    """
+    if not note_ref or not note_ref.strip():
+        raise ValueError("note reference is empty")
+    if "/" in note_ref or "\\" in note_ref or ".." in note_ref:
+        raise ValueError(f"invalid note reference: {note_ref!r}")
+
+    directory = Path(notes_dir).expanduser()
+    if note_ref.isdigit():
+        index = int(note_ref)
+        notes = (
+            sorted(directory.glob("*.md"), reverse=True)
+            if directory.is_dir()
+            else []
+        )
+        if index < 1 or index > len(notes):
+            if not notes:
+                raise IndexError(f"no notes in {directory}")
+            raise IndexError(
+                f"note {index} not found (only {len(notes)} notes)"
+            )
+        path = notes[index - 1]
+    else:
+        path = directory / note_ref
+        if not path.is_file():
+            raise FileNotFoundError(f"no such note: {note_ref}")
+
+    return path, path.read_text()

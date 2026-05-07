@@ -177,3 +177,100 @@ def test_list_uses_notes_dir_option_over_env(tmp_path, monkeypatch):
     assert result.exit_code == 0, result.output
     assert "opt.md" in result.output
     assert not (tmp_path / "from-env").exists()
+
+
+def test_show_by_index_prints_filename_header_and_content(tmp_path, monkeypatch):
+    monkeypatch.setenv("NOTES_DIR", str(tmp_path))
+    (tmp_path / "2026-05-07-093045-foo.md").write_text("# foo\nbody\n")
+    result = CliRunner().invoke(cli, ["show", "1"])
+    assert result.exit_code == 0, result.output
+    assert result.output == "2026-05-07-093045-foo.md\n\n# foo\nbody\n"
+
+
+def test_show_by_filename(tmp_path, monkeypatch):
+    monkeypatch.setenv("NOTES_DIR", str(tmp_path))
+    (tmp_path / "2026-05-07-093045-foo.md").write_text("# foo\nbody\n")
+    result = CliRunner().invoke(
+        cli, ["show", "2026-05-07-093045-foo.md"]
+    )
+    assert result.exit_code == 0, result.output
+    assert result.output == "2026-05-07-093045-foo.md\n\n# foo\nbody\n"
+
+
+def test_show_index_picks_newest_first(tmp_path, monkeypatch):
+    monkeypatch.setenv("NOTES_DIR", str(tmp_path))
+    (tmp_path / "2026-05-06-094501-old.md").write_text("# old\n")
+    (tmp_path / "2026-05-07-093045-new.md").write_text("# new\n")
+    result = CliRunner().invoke(cli, ["show", "1"])
+    assert result.exit_code == 0, result.output
+    assert "2026-05-07-093045-new.md" in result.output
+    assert "# new" in result.output
+
+
+def test_show_preserves_no_trailing_newline(tmp_path, monkeypatch):
+    monkeypatch.setenv("NOTES_DIR", str(tmp_path))
+    (tmp_path / "2026-05-07-093045-foo.md").write_text("# foo")
+    result = CliRunner().invoke(cli, ["show", "1"])
+    assert result.exit_code == 0, result.output
+    assert result.output == "2026-05-07-093045-foo.md\n\n# foo"
+
+
+def test_show_index_out_of_range_exits_2(tmp_path, monkeypatch):
+    monkeypatch.setenv("NOTES_DIR", str(tmp_path))
+    (tmp_path / "2026-05-07-093045-foo.md").write_text("# foo\n")
+    result = CliRunner().invoke(cli, ["show", "99"])
+    assert result.exit_code == 2
+    assert "only 1 notes" in result.output
+
+
+def test_show_zero_exits_2(tmp_path, monkeypatch):
+    monkeypatch.setenv("NOTES_DIR", str(tmp_path))
+    (tmp_path / "2026-05-07-093045-foo.md").write_text("# foo\n")
+    result = CliRunner().invoke(cli, ["show", "0"])
+    assert result.exit_code == 2
+
+
+def test_show_missing_filename_exits_2(tmp_path, monkeypatch):
+    monkeypatch.setenv("NOTES_DIR", str(tmp_path))
+    result = CliRunner().invoke(cli, ["show", "nope.md"])
+    assert result.exit_code == 2
+    assert "no such note" in result.output.lower()
+
+
+def test_show_path_traversal_exits_2(tmp_path, monkeypatch):
+    monkeypatch.setenv("NOTES_DIR", str(tmp_path))
+    result = CliRunner().invoke(cli, ["show", "../etc/passwd"])
+    assert result.exit_code == 2
+
+
+def test_show_empty_dir_with_index_exits_2(tmp_path, monkeypatch):
+    monkeypatch.setenv("NOTES_DIR", str(tmp_path))
+    result = CliRunner().invoke(cli, ["show", "1"])
+    assert result.exit_code == 2
+    assert "no notes" in result.output
+
+
+def test_show_does_not_create_missing_notes_dir(tmp_path, monkeypatch):
+    target = tmp_path / "does-not-exist"
+    monkeypatch.setenv("NOTES_DIR", str(target))
+    result = CliRunner().invoke(cli, ["show", "1"])
+    assert result.exit_code == 2
+    assert not target.exists()
+
+
+def test_show_uses_notes_dir_option_over_env(tmp_path, monkeypatch):
+    other = tmp_path / "from-option"
+    other.mkdir()
+    (other / "2026-05-07-093045-opt.md").write_text("# opt body\n")
+    monkeypatch.setenv("NOTES_DIR", str(tmp_path / "from-env"))
+    result = CliRunner().invoke(
+        cli, ["show", "--notes-dir", str(other), "1"]
+    )
+    assert result.exit_code == 0, result.output
+    assert "opt body" in result.output
+    assert not (tmp_path / "from-env").exists()
+
+
+def test_show_missing_argument_exits_2():
+    result = CliRunner().invoke(cli, ["show"])
+    assert result.exit_code == 2
