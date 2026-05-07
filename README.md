@@ -45,6 +45,16 @@ Note: `uv run --env-file .env` loads the dev environment explicitly — there is
 | `LOG_LEVEL` | `INFO`    | Console log level. Set to `DEBUG` in `.env` for verbose output. |
 | `LOG_FILE`  | `app.log` | Path to the log file.                               |
 
+## Logging
+
+Both stderr and the log file use the same compact format:
+
+```
+2026-05-07 12:34:56 | INF | second_brain.app:main:42 | Hello from second_brain!
+```
+
+Levels are abbreviated to three letters (`DBG`, `INF`, `WRN`, `ERR`, `CRT`) and fields are pipe-separated.
+
 ## Testing
 
 Run the test suite:
