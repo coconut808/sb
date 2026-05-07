@@ -27,6 +27,14 @@ uv run second_brain new "My brilliant idea about caching"
 
 The note is written as a plain markdown file under `$NOTES_DIR` (default `~/second_brain`), and the absolute path is printed to stdout.
 
+List saved notes, newest first:
+
+```bash
+uv run second_brain list
+```
+
+Prints the notes directory and a numbered list of `*.md` filenames. If the directory is missing it is created and `(no notes yet)` is shown.
+
 The legacy greeting is preserved as `second_brain hello` (smoke test).
 
 ## Environment Variables
@@ -43,7 +51,7 @@ Note: `uv run --env-file .env` loads the dev environment explicitly — there is
 |-------------|------------------|--------------------------------------------------------------|
 | `LOG_LEVEL` | `INFO`           | Console log level. Set to `DEBUG` in `.env` for verbose output. |
 | `LOG_FILE`  | `app.log`        | Path to the log file.                                         |
-| `NOTES_DIR` | `~/second_brain` | Directory where `second_brain new` saves notes.               |
+| `NOTES_DIR` | `~/second_brain` | Directory where `second_brain new` saves notes and `list` reads from. |
 
 ## Logging
 
