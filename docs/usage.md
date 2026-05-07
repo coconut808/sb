@@ -64,6 +64,39 @@ Notes in /Users/me/second_brain:
 
 The exit code is always `0` — an empty notes directory is not an error.
 
+### `second_brain show <NOTE>`
+
+Print a saved note to stdout without opening an editor. `NOTE` is either a
+1-based index from `second_brain list` or an exact `*.md` filename in
+`$NOTES_DIR`:
+
+```bash
+uv run second_brain show 1
+# 2026-05-07-093045-my-brilliant-idea.md
+#
+# # My brilliant idea about caching
+
+uv run second_brain show 2026-05-07-093045-my-brilliant-idea.md
+# 2026-05-07-093045-my-brilliant-idea.md
+#
+# # My brilliant idea about caching
+```
+
+The output is the filename on line 1, a blank line, then the file contents
+verbatim (the file's own trailing newline is preserved).
+
+`show` is read-only: if `$NOTES_DIR` is missing it is **not** created — unlike
+`new` and `list`. Invalid input — non-positive integer, out-of-range index,
+unknown filename, or a reference containing `/`, `\`, or `..` — exits with
+code `2` and a `BadParameter` error:
+
+```
+Usage: second_brain show [OPTIONS] NOTE
+Try 'second_brain show --help' for help.
+
+Error: Invalid value for NOTE: note 99 not found (only 2 notes)
+```
+
 ### `second_brain hello`
 
 Legacy smoke test — prints the greeting through the configured logger.
@@ -74,16 +107,17 @@ Legacy smoke test — prints the greeting through the configured logger.
 |-------------|--------------------|-----------------------------------------------|
 | `LOG_LEVEL` | `INFO`             | Console log level (DEBUG, INFO, …)            |
 | `LOG_FILE`  | `app.log`          | Path to the log file                          |
-| `NOTES_DIR` | `~/second_brain`   | Directory where `second_brain new` saves notes and `list` reads from |
+| `NOTES_DIR` | `~/second_brain`   | Directory where `second_brain new` saves notes and `list` / `show` read from |
 
 Copy `.env.example` to `.env` for development defaults, then run with `uv run --env-file .env`.
 
-`NOTES_DIR` can also be overridden per-call with `--notes-dir`, on either `new`
-or `list`:
+`NOTES_DIR` can also be overridden per-call with `--notes-dir`, on `new`,
+`list`, or `show`:
 
 ```bash
 uv run second_brain new --notes-dir /tmp/scratch "throwaway thought"
 uv run second_brain list --notes-dir /tmp/scratch
+uv run second_brain show --notes-dir /tmp/scratch 1
 ```
 
 ## Logging

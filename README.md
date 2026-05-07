@@ -35,6 +35,15 @@ uv run second_brain list
 
 Prints the notes directory and a numbered list of `*.md` filenames. If the directory is missing it is created and `(no notes yet)` is shown.
 
+Print a note to the terminal without opening an editor:
+
+```bash
+uv run second_brain show 1
+uv run second_brain show 2026-05-07-093045-my-brilliant-idea.md
+```
+
+`NOTE` is either a 1-based index from `second_brain list` or an exact filename in `$NOTES_DIR`. Output is the filename, a blank line, then the file contents. Unlike `new` and `list`, `show` never creates the notes directory. Invalid input (out-of-range index, unknown filename, or a reference containing `/`, `\`, or `..`) exits with code `2`.
+
 The legacy greeting is preserved as `second_brain hello` (smoke test).
 
 ## Environment Variables
@@ -51,7 +60,7 @@ Note: `uv run --env-file .env` loads the dev environment explicitly — there is
 |-------------|------------------|--------------------------------------------------------------|
 | `LOG_LEVEL` | `INFO`           | Console log level. Set to `DEBUG` in `.env` for verbose output. |
 | `LOG_FILE`  | `app.log`        | Path to the log file.                                         |
-| `NOTES_DIR` | `~/second_brain` | Directory where `second_brain new` saves notes and `list` reads from. |
+| `NOTES_DIR` | `~/second_brain` | Directory where `second_brain new` saves notes and `list` / `show` read from. |
 
 ## Logging
 

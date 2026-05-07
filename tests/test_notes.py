@@ -2,7 +2,9 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-from second_brain.notes import list_notes, slugify, write_note
+import pytest
+
+from second_brain.notes import list_notes, read_note, slugify, write_note
 
 
 def test_slugify_basic():
@@ -120,3 +122,89 @@ def test_list_notes_expanduser(tmp_path, monkeypatch):
     (notes_root / "2026-05-07-093045-hi.md").write_text("# hi\n")
     result = list_notes("~/sb-list-notes")
     assert [p.name for p in result] == ["2026-05-07-093045-hi.md"]
+
+
+def test_read_note_resolves_index_newest_first(tmp_path):
+    (tmp_path / "2026-05-06-094501-old.md").write_text("# old\n")
+    (tmp_path / "2026-05-07-093045-new.md").write_text("# new\n")
+    path, content = read_note(str(tmp_path), "1")
+    assert path.name == "2026-05-07-093045-new.md"
+    assert content == "# new\n"
+
+
+def test_read_note_resolves_filename(tmp_path):
+    (tmp_path / "2026-05-07-093045-foo.md").write_text("# foo\nbody\n")
+    path, content = read_note(str(tmp_path), "2026-05-07-093045-foo.md")
+    assert path.name == "2026-05-07-093045-foo.md"
+    assert content == "# foo\nbody\n"
+
+
+def test_read_note_index_out_of_range(tmp_path):
+    (tmp_path / "2026-05-07-093045-foo.md").write_text("# foo\n")
+    with pytest.raises(IndexError, match="only 1 notes"):
+        read_note(str(tmp_path), "5")
+
+
+def test_read_note_index_zero(tmp_path):
+    (tmp_path / "2026-05-07-093045-foo.md").write_text("# foo\n")
+    with pytest.raises(IndexError):
+        read_note(str(tmp_path), "0")
+
+
+def test_read_note_index_in_empty_dir(tmp_path):
+    with pytest.raises(IndexError, match="no notes"):
+        read_note(str(tmp_path), "1")
+
+
+def test_read_note_filename_missing(tmp_path):
+    with pytest.raises(FileNotFoundError, match="no such note"):
+        read_note(str(tmp_path), "nope.md")
+
+
+def test_read_note_rejects_path_traversal_dotdot(tmp_path):
+    with pytest.raises(ValueError):
+        read_note(str(tmp_path), "../etc/passwd")
+
+
+def test_read_note_rejects_path_separator(tmp_path):
+    with pytest.raises(ValueError):
+        read_note(str(tmp_path), "subdir/foo.md")
+
+
+def test_read_note_rejects_backslash(tmp_path):
+    with pytest.raises(ValueError):
+        read_note(str(tmp_path), "subdir\\foo.md")
+
+
+def test_read_note_rejects_empty(tmp_path):
+    with pytest.raises(ValueError):
+        read_note(str(tmp_path), "")
+
+
+def test_read_note_rejects_whitespace(tmp_path):
+    with pytest.raises(ValueError):
+        read_note(str(tmp_path), "   ")
+
+
+def test_read_note_does_not_create_missing_dir(tmp_path):
+    target = tmp_path / "does-not-exist"
+    with pytest.raises(IndexError):
+        read_note(str(target), "1")
+    assert not target.exists()
+
+
+def test_read_note_missing_dir_filename(tmp_path):
+    target = tmp_path / "does-not-exist"
+    with pytest.raises(FileNotFoundError):
+        read_note(str(target), "foo.md")
+    assert not target.exists()
+
+
+def test_read_note_expanduser(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    notes_root = tmp_path / "sb-read-notes"
+    notes_root.mkdir()
+    (notes_root / "2026-05-07-093045-hi.md").write_text("# hi\n")
+    path, content = read_note("~/sb-read-notes", "1")
+    assert path.name == "2026-05-07-093045-hi.md"
+    assert content == "# hi\n"
